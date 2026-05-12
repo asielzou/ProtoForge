@@ -39,7 +39,7 @@ postgresql:
   image: postgres:16-alpine
   database: protoforge
   username: protoforge
-  password: CHANGE_ME
+  password: ""  # REQUIRED: set via --set or --values override  # FIXED: placeholder credential
   persistence:
     enabled: true
     size: 10Gi
@@ -49,7 +49,7 @@ env:
   PROTOFORGE_PORT: "8000"
   PROTOFORGE_DB_ENGINE: "postgresql"
 
-jwtSecret: CHANGE_ME_RANDOM_SECRET
+jwtSecret: ""  # REQUIRED: set via --set or --values override  # FIXED: placeholder credential
 
 livenessProbe:
   initialDelaySeconds: 30
