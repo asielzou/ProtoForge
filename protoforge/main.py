@@ -162,6 +162,10 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse, JSONResponse
+    from pathlib import Path
+
     app = FastAPI(
         title="ProtoForge",
         description="物联网协议仿真与测试平台 API",
@@ -182,8 +186,9 @@ def create_app() -> FastAPI:
 
     app.include_router(router)
 
-    @app.get("/")
-    async def root():
+    # ========== 保留的 API 端点(改成 /api/info,不再占用 /) ==========
+    @app.get("/api/info")
+    async def info():
         return {
             "name": "ProtoForge",
             "version": "0.1.0",
@@ -193,6 +198,35 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health():
         return {"status": "ok"}
+
+    # ========== 前端静态资源 ==========
+    STATIC_DIR = Path("/app/static")
+
+    if STATIC_DIR.exists():
+        # 挂载 Vite 打包出的 assets 目录(js/css)
+        assets_dir = STATIC_DIR / "assets"
+        if assets_dir.exists():
+            app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+        # SPA 兜底路由:未匹配到的路径都返回 index.html,由 Vue Router 接管
+        # 注意:这个必须放在所有路由注册之后!
+        @app.get("/{full_path:path}")
+        async def serve_spa(full_path: str):
+            # 不拦截 API 路径(让它们走正常的 404)
+            if full_path.startswith(("api/", "docs", "redoc", "openapi.json", "health")):
+                return JSONResponse({"detail": "Not Found"}, status_code=404)
+
+            # 优先返回真实存在的静态文件(favicon、logo 等根目录文件)
+            candidate = STATIC_DIR / full_path
+            if candidate.is_file():
+                return FileResponse(candidate)
+
+            # 其他一律回 index.html(支持 Vue Router history 模式刷新)
+            index_file = STATIC_DIR / "index.html"
+            if index_file.exists():
+                return FileResponse(index_file)
+
+            return JSONResponse({"error": "frontend not built"}, status_code=404)
 
     return app
 
