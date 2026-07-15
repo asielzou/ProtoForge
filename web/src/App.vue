@@ -1,4 +1,10 @@
-<template>
+<template>  
+  <n-config-provider>
+    <n-message-provider>
+      <n-dialog-provider>
+        <n-notification-provider>
+          <n-loading-bar-provider>
+  
   <div v-if="!loggedIn" class="login-wrapper">
     <Login @login-success="onLogin" />
   </div>
@@ -73,6 +79,11 @@
       </n-layout-content>
     </n-layout>
   </n-layout>
+             </n-loading-bar-provider>
+        </n-notification-provider>
+      </n-dialog-provider>
+    </n-message-provider>
+  </n-config-provider>         
 </template>
 
 <script setup>
